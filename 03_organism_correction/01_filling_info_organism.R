@@ -10,163 +10,206 @@ library(dplyr)
 all_libs = loadRData("~/Documents/Projects/git_projects/strain_db/output_files/01_date_corrected/all_libs.RData")
 
 # Transform all the NA to "-"
-all_libs$owner[which(is.na(all_libs$owner))] <- "-"
-
-# Convert them to upper case - later
-# all_libs$owner = toupper(all_libs$owner)
+all_libs$organism[which(is.na(all_libs$organism))] <- "-"
 
 # How are the dates added to the table
-temp_owner_tab = data.frame(table(all_libs$owner), stringsAsFactors = FALSE)
+temp_org_tab = data.frame(table(all_libs$organism), stringsAsFactors = FALSE)
 
 # Assign column names
-colnames(temp_owner_tab) <- c("ID", "count")
+colnames(temp_org_tab) <- c("ID", "count")
 
 # duplicate the column information
-temp_owner_tab$names = temp_owner_tab$ID
+temp_org_tab$names = toupper(temp_org_tab$ID)
 
 # How are the dates added to the table - convert them as character
-temp_owner_tab <- as.data.frame(apply(temp_owner_tab, c(1, 2), as.character))
+temp_org_tab <- as.data.frame(apply(temp_org_tab, c(1, 2), as.character))
 
-# what are those digits doing in the name section
-temp_digit_check_index = which(grepl(pattern = str_c("\\d{1,3}", "-", "controls", "Dag", "Deeplex", "Deutschland", "DNA", "external", "FIND", "internal", "Internal", "M.bovis", "M.chimaera", "Mailand", "Maputo", "NRZ", "NGS-Aufträge", "Rasmussen", "roter Ständer", sep = "|"), x = temp_owner_tab$names))
+# Remove all the double space
+temp_org_tab$names <- str_replace_all(temp_org_tab$names, "\\s{2,}", " ")
 
-# Replcae with a character identifier
-temp_owner_tab$names[temp_digit_check_index] <- "check study"
+# Add missing space after a period
+temp_org_tab$names <- str_replace_all(temp_org_tab$names, "(\\w)\\.(\\w)", "\\1. \\2")
 
-# Get the libs with owner information
-temp_owner_owned = temp_owner_tab[!temp_owner_tab$names %in% "check study", ]
+# List of known scientific names and their replacements
+scientific_name_map <- list(
+  "-" = NA,
+  "?" = NA,
+  "A. BAUMANNII" = "Acinetobacter baumannii",
+  "ACIDOBACILLUS FERROOXIDANS" = "Acidithiobacillus ferrooxidans",
+  "ACINETOBACTER" = "Acinetobacter spp.",
+  "ACINETOBACTER LWOFFII" = "Acinetobacter lwoffii",
+  "ACTINOBACILLUS MURIS" = "Actinobacillus muris",
+  "ARTHROBACTER" = "Arthrobacter spp.",
+  "BACILLUS MEGATERIUM" = "Bacillus megaterium",
+  "BCG" = "Mycobacterium bovis BCG",
+  "BEIJING" = NA,  # If referring to a lineage or variant, specify
+  "BLAER1" = "BLaER1 Human B-cell Precursor Leukemia Cell Line",
+  "BLAER1 GFP-" = "BLaER1 Human B-cell Precursor Leukemia Cell Line (GFP)",
+  "BLAU D5" = NA,
+  "BLAU H10" = NA,
+  "BLAU H11" = NA,
+  "BOLLETII" = "Mycobacterium bolletii",
+  "C. METALLIDURANS" = "Cupriavidus metallidurans",
+  "C. PNEUMONIAE" = "Chlamydia pneumoniae",
+  "C. TRACHOMATIS" = "Chlamydia trachomatis",
+  "CHLAMYDIA" = "Chlamydia spp.",
+  "CHLAMYDIA PNEUMONIAE" = "Chlamydia pneumoniae",
+  "CHLAMYDIA TRACHOMATIS" = "Chlamydia trachomatis",
+  "COMAMONAS SP." = "Comamonas sp.",
+  "CORYNEBACTERIUM SPEC" = "Corynebacterium sp.",
+  "COVID-19" = "SARS-CoV-2",
+  "CUPRIAVIDUS METALLIDURANS" = "Cupriavidus metallidurans",
+  "EURO-AMERICAN" = NA,  # Clarification needed if lineage-related
+  "H. HAEMOLYTICUS" = "Haemophilus haemolyticus",
+  "H. INFLUENZAE" = "Haemophilus influenzae",
+  "H37RV" = "Mycobacterium tuberculosis H37Rv",
+  "HAARLEM" = NA,  # Lineage specification needed
+  "HAEMOPHILUS HAEMOLYTICUS" = "Haemophilus haemolyticus",
+  "HAEMOPHILUS INFLUENZAE" = "Haemophilus influenzae",
+  "HAEMOPHILUS PARAINFLUENZAE" = "Haemophilus parainfluenzae",
+  "HOMO SAPIENS" = "Homo sapiens",
+  "HUMAN 10 NG" = "Homo sapiens (10ng)",  # General human entry
+  "K. PNEUMONIAE" = "Klebsiella pneumoniae",
+  "KOCURIA KRISTINAE" = "Kocuria kristinae",
+  "LACTOBACILLUS SPEC." = "Lactobacillus sp.",
+  "LACTOCOCCUS LACTIS" = "Lactococcus lactis",
+  "LEGIONELLA" = "Legionella spp.",
+  "LEGIONELLA PNEUMOPHILA" = "Legionella pneumophila",
+  "LEPTOSPIRILLUM FERRIPHILUM" = "Leptospirillum ferriphilum",
+  "M. ABSCESSUS" = "Mycobacterium abscessus",
+  "M. ABSCESSUS/ IMMUNOGENSE (PRIMÄRKULTUR)" = "Mycobacterium abscessus/immunogense (primary culture)",
+  "M. AFRICANUM" = "Mycobacterium africanum",
+  "M. AVIUM" = "Mycobacterium avium",
+  "M. AVIUM COMPLEX" = "Mycobacterium avium complex",
+  "M. AVIUM COMPLEX?" = "Mycobacterium avium complex",
+  "M. AVIUM C" = "Mycobacterium avium complex",
+  "M. BOVIS" = "Mycobacterium bovis",
+  "M. BOVIS AFRICANUM" = "Mycobacterium bovis africanum",
+  "M. BOVIS_CAPRAE" = "Mycobacterium -bovis, -caprae",
+  "M. BOVIS/BOVIS" = "Mycobacterium bovis",
+  "M. BASILIENSE" = "Mycobacterium basiliense",
+  "M. BASILLENCE" = "Mycobacterium basiliense",
+  "M. (PARA)INTRACELLULARE, CHIMAERA, YONGONENSE, INDICUS PRANII" = "Mycobacterium -(para)intracellulare, -chimaera, -yonogonense, -indicus pranii",
+  "M. CANETTI" = "Mycobacterium canettii",
+  "M. CANETTII" = "Mycobacterium canettii",
+  "M. CAPRAE" = "Mycobacterium caprae",
+  "M. CHELONAE" = "Mycobacterium chelonae",
+  "M. CHIMAERA" = "Mycobacterium chimaera",
+  "M. FORTUITUM" = "Mycobacterium fortuitum",
+  "M. GASTRI" = "Mycobacterium gastri",
+  "M. GASTRI/KANSASII" = "Mycobacterium -gastri, -kansasii",
+  "M. GASTRI/KANSASII-LIKE (N=2)" = "Mycobacterium -gastri, -kansasii-like (2 nt)",
+  "M. GILVUM" = "Mycobacterium gilvum",
+  "M. GORDONAE" = "Mycobacterium gordonae",
+  "M. INTRACELLULARE" = "Mycobacterium intracellulare",
+  "M. INTRACELULLARE" = "Mycobacterium intracellulare",
+  "M. INTRACELLULARE (PRIMÄRKULTUR)" = "Mycobacterium intracellulare (primary culture)",
+  "M. INTRACELLULARE, M. MARSEILLENSE, M. YONGONENSE" = "Mycobacterium -intracellulare, -marseillense, -yonogonense",
+  "M. INTRACELLULARE, M. YONGONENSE, MARSEILLENSE" = "Mycobacterium -intracellulare, -marseillense, -yonogonense",
+  "M. INTRACELLULARE GRUPPE" = "Mycobacterium intracellulare group",
+  "M. KANSASII" = "Mycobacterium kansasii",
+  "M. KANSASII (PRIMÄRKULTUR)" = "Mycobacterium kansasii (primary culture)",
+  "M. KANSASII-LIKE (N=1)" = "Mycobacterium kansasii-like (1 nt)",
+  "M. KANSASII/GASTRI" = "Mycobacterium -gastri, -kansasii",
+  "M. KANSASII/GASTRI-LIKE (1 NT)" = "Mycobacterium -kansasii, -gastri-like (1 nt)",
+  "M. MARINUM (PRIMÄRKULTUR)" = "Mycobacterium marinum (primary culture)",
+  "M. MARSEILLENSE, M. YONGONENSE, M. INTRACELLULARE" = "Mycobacterium -intracellulare, -marseillense, -yonogonense",
+  "M. ORYGIS" = "Mycobacterium orygis",
+  "M. ORYGIS?" = "Mycobacterium orygis",
+  "M. SPEZIES" = "Mycobacterium spp.",
+  "M. SPECIES" = "Mycobacterium spp.",
+  "M. TUBERCULOSIS" = "Mycobacterium tuberculosis",
+  "M. TUBERCULOSIS H37RV" = "Mycobacterium tuberculosis H37Rv",
+  "M. TUBERCULOSIS (ERDMAN)" = "Mycobacterium tuberculosis (Erdman)",
+  "M. UNBEKANNTE ART" = NA,
+  "M. TUBERCULOSIS, M. AVIUM" = "Mycobacterium -tuberculosis, -avium",
+  "M. CHELONE" = "Mycobacterium chelonae",
+  "M. CHIMARERA" = "Mycobacterium chimaera",
+  "M. MALMOENSE" = "Mycobacterium malmoense",
+  "M. MICROTI" = "Mycobacterium microti",
+  "M. PINNIPEDII" = "Mycobacterium pinnipedii",
+  "M. SIMIAE" = "Mycobacterium simiae",
+  "M. SMEGMATIS" = "Mycobacterium smegmatis",
+  "M. SZULGAI" = "Mycobacterium szulgai",
+  "M. TRIPLEX" = "Mycobacterium triplex",
+  "M. ULCERANS" = "Mycobacterium ulcerans",
+  "M. VULNERIS" = "Mycobacterium vulneris",
+  "M. BOVIS BCG, ATCC" = "Mycobacterium bovis BCG, ATCC",
+  "M. CELATUM" = "Mycobacterium celatum",
+  "M. CHIMAERA VARIANTE" = "Mycobacterium chimaera variante",
+  "M. CHIMEARA" = "Mycobacterium chimaera",
+  "M. INTERJECTUM" = "Mycobacterium interjectum",
+  "M. INTRACELLUAR" = "Mycobacterium intracellulare",
+  "M. MARINUM/ULCERANS" = "Mycobacterium -marinum, -ulcerans",
+  "M. XENOPI" = "Mycobacterium xenopi",
+  "MAC" = "Mycobacterium avium complex",
+  "MASSILIENSE" = "Mycobacterium massiliense",
+  "MICROBE MIX" = "Microbe mix",
+  "MIKROBIOM" = "Microbiome",
+  "MTB H37RV" = "Mycobacterium tuberculosis H37Rv",
+  "MYCOBACTERIUM BOVIS" = "Mycobacterium bovis",
+  "MYCOBACTERIUM CHIMAERA" = "Mycobacterium chimaera",
+  "MYCOBACTERIUM MICROTI" = "Mycobacterium microti",
+  "MYCOBACTERIUM SMEGMATIS" = "Mycobacterium smegmatis",
+  "NA" = "undefined by responsible person",
+  "NTM" = "Nontuberculous mycobacteria",
+  "P. AERUGINOSA" = "Pseudomonas aeruginosa",
+  "PANTOEA AGGLOMERANS" = "Pantoea agglomerans",
+  "PASTEURELLA PNEUMOTROPICA" = "Pasteurella pneumotropica",
+  "PLASMID" = NA,
+  "PSEUDOALTEROMONAS TUNICATA" = "Pseudoalteromonas tunicata",
+  "S-TYPE" = NA,
+  "S. HOMINIS" = "Staphylococcus hominis",
+  "S. MALTOPHILIA" = "Stenotrophomonas maltophilia",
+  "SARS-COV-2" = "SARS-CoV-2",
+  "SERRATIA \"BATHROOM\"" = "Serratia spp.",
+  "SERRATIA GRIMESII" = "Serratia grimesii",
+  "STAPHYLOCOCCUS EPIDERMIS" = "Staphylococcus epidermidis",
+  "STAPHYLOCOCCUS HAEMOLYTICUS" = "Staphylococcus haemolyticus",
+  "STAPHYLOCOCCUS PASTEURI" = "Staphylococcus pasteuri",
+  "STAPHYLOCOCCUS XYLOSUS" = "Staphylococcus xylosus",
+  "STENOTROPHOMONAS MALTOPHILIA" = "Stenotrophomonas maltophilia",
+  "STREPTOCOCCUS PYOGENES" = "Streptococcus pyogenes",
+  "TB (PRIMÄRKULTUR)" = "Mycobacterium tuberculosis (Primary culture)",
+  "TB (WACHSTUMSKONTROLLE)" = "Mycobacterium tuberculosis (Growth control)",
+  "HUMAN 9,99999NG/ M. TUBERCULOSIS 0,00001NG" = "Homo sapiens/Mycobacterium tuberculosis (9,99999ng/0,00001ng)",
+  "HUMAN 9,9999NG/ M. TUBERCULOSIS 0,0001NG" = "Homo sapiens/Mycobacterium tuberculosis (9,9999ng/0,0001ng)",
+  "HUMAN 9,999NG/ M. TUBERCULOSIS 0,001NG" = "Homo sapiens/Mycobacterium tuberculosis (9,999ng/0,001ng)",
+  "HUMAN 9,99NG/ M. TUBERCULOSIS 0,01NG" = "Homo sapiens/Mycobacterium tuberculosis (9,99ng/0,01ng)",
+  "HUMAN 9,9NG/ M. TUBERCULOSIS 0,1NG" = "Homo sapiens/Mycobacterium tuberculosis (9,9ng/0,1ng)",
+  "HUMAN 9NG/ M. TUBERCULOSIS 1NG" = "Homo sapiens/Mycobacterium tuberculosis (9ng/1ng)",
+  "HUMAN/ M. TUBERCULOSIS" = "Homo sapiens/Mycobacterium tuberculosis",
+  "TOTAL BACTERIA GENES" = NA,
+  "UNKNOWN (M. HEIDELBERGENSE)" = "Mycobacterium heidelbergense",
+  "URAL" = NA,
+  "WEST-AFRICA 1" = NA,
+  "WEST-AFRICA 2" = NA,
+  "X-TYPE" = NA
+)
 
-for (i in c(1:nrow(temp_owner_owned))){
-  if (temp_owner_owned$names[i] == "Alejandro"){
-    temp_owner_owned$names[i] = "AV"
-  } else if (temp_owner_owned$names[i] == "Anna"){
-    temp_owner_owned$names[i] = "AM"
-  } else if (temp_owner_owned$names[i] == "Annelies Yinkernagel"){
-    temp_owner_owned$names[i] = "AY"
-  } else if (temp_owner_owned$names[i] == "Annemarie"){
-    temp_owner_owned$names[i] = "AH"
-  } else if (temp_owner_owned$names[i] == "Aya/ Matthias"){
-    temp_owner_owned$names[i] = "MM"
-  } else if (temp_owner_owned$names[i] == "Barbara Kalsdorf"){
-    temp_owner_owned$names[i] = "check with VD"
-  } else if (temp_owner_owned$names[i] == "Christoph Lange"){
-    temp_owner_owned$names[i] = "check with VD"
-  } else if (temp_owner_owned$names[i] == "CU, TK"){
-    temp_owner_owned$names[i] = "CU/TK"
-  } else if (temp_owner_owned$names[i] == "CZ"){
-    temp_owner_owned$names[i] = "check with VD"
-  } else if (temp_owner_owned$names[i] == "DH"){
-    temp_owner_owned$names[i] = "check with VD"
-  } else if (temp_owner_owned$names[i] == "DH/DN"){
-    temp_owner_owned$names[i] = "check with VD"
-  } else if (temp_owner_owned$names[i] == "DN/PB"){
-    temp_owner_owned$names[i] = "check with VD"
-  } else if (temp_owner_owned$names[i] %in% c("Glennah", "GK")){
-    temp_owner_owned$names[i] = "GK"
-  } else if (temp_owner_owned$names[i] == "Harald Hoffman"){
-    temp_owner_owned$names[i] = "check with VD"
-  } else if (temp_owner_owned$names[i] == "HB"){
-    temp_owner_owned$names[i] = "check with VD"
-  } else if (temp_owner_owned$names[i] == "HC"){
-    temp_owner_owned$names[i] = "check with VD"
-  } else if (temp_owner_owned$names[i] == "Holger Heine"){
-    temp_owner_owned$names[i] = "check with VD"
-  } else if (temp_owner_owned$names[i] == "IB, LA"){
-    temp_owner_owned$names[i] = "IB/LA"
-  } else if (temp_owner_owned$names[i] %in% c("Irena", "Irena Zivanovic")){
-    temp_owner_owned$names[i] = "IZ"
-  } else if (temp_owner_owned$names[i] == "JA"){
-    temp_owner_owned$names[i] = "check with VD"
-  } else if (temp_owner_owned$names[i] == "Jana Schönfeld"){
-    temp_owner_owned$names[i] = "JS"
-  } else if (temp_owner_owned$names[i] %in% c("Johanna", "Johanna Pèrez", "JP")){
-    temp_owner_owned$names[i] = "JP"
-  } else if (temp_owner_owned$names[i] == "John"){
-    temp_owner_owned$names[i] = "check with VD"
-  } else if (temp_owner_owned$names[i] %in% c("Julia", "JZ")){
-    temp_owner_owned$names[i] = "check with VD"
-  } else if (temp_owner_owned$names[i] == "Justine"){
-    temp_owner_owned$names[i] = "check with VD"
-  } else if (temp_owner_owned$names[i] == "Karen Björn-Mortensen"){
-    temp_owner_owned$names[i] = "check with VD"
-  } else if (temp_owner_owned$names[i] == "Knobloch"){
-    temp_owner_owned$names[i] = "check with VD"
-  } else if (temp_owner_owned$names[i] == "LA,CU"){
-    temp_owner_owned$names[i] = "LA/CU"
-  } else if (temp_owner_owned$names[i] %in% c("Leila", "LJ")){
-    temp_owner_owned$names[i] = "LJ"
-  } else if (temp_owner_owned$names[i] == "Leonardo de Araujo"){
-    temp_owner_owned$names[i] = "LA"
-  } else if (temp_owner_owned$names[i] == "LI"){
-    temp_owner_owned$names[i] = "check with VD"
-  } else if (temp_owner_owned$names[i] %in% c("Lindsay", "LT", "LS")){
-    temp_owner_owned$names[i] = "LS"
-  } else if (temp_owner_owned$names[i] %in% c("Margo Diricks")){
-    temp_owner_owned$names[i] = "MD"
-  } else if (temp_owner_owned$names[i] == "Matthias"){
-    temp_owner_owned$names[i] = "MM"
-  } else if (temp_owner_owned$names[i] == "MR"){
-    temp_owner_owned$names[i] = "check with VD"
-  } else if (temp_owner_owned$names[i] == "NIP/UNAM"){
-    temp_owner_owned$names[i] = "CU/IB/VD"
-  } else if (temp_owner_owned$names[i] %in% c("nuebel", "Nuebel", "Ulrich Nübel")){
-    temp_owner_owned$names[i] = "UN"
-  } else if (temp_owner_owned$names[i] == "Patrick"){
-    temp_owner_owned$names[i] = "PB"
-  } else if (temp_owner_owned$names[i] == "SF/ TK"){
-    temp_owner_owned$names[i] = "SF/TK"
-  } else if (temp_owner_owned$names[i] == "SG"){
-    temp_owner_owned$names[i] = "check with VD"
-  } else if (temp_owner_owned$names[i] %in% c("Silke")){
-    temp_owner_owned$names[i] = "SF"
-  } else if (temp_owner_owned$names[i] == "Silvia Maaß"){
-    temp_owner_owned$names[i] = "SM"
-  } else if (temp_owner_owned$names[i] == "Sönke"){
-    temp_owner_owned$names[i] = "check with VD"
-  } else if (temp_owner_owned$names[i] == "SP"){
-    temp_owner_owned$names[i] = "check with VD"
-  } else if (temp_owner_owned$names[i] == "Stefan"){
-    temp_owner_owned$names[i] = "SN"
-  } else if (temp_owner_owned$names[i] %in% c("Susanne", "Susanne Homolka")){
-    temp_owner_owned$names[i] = "SH"
-  } else if (temp_owner_owned$names[i] == "Tanja/Stefan"){
-    temp_owner_owned$names[i] = "TN/SN"
-  } else if (temp_owner_owned$names[i] %in% c("Thomas", "Thomas Kohl", "Tk", "TK")){
-    temp_owner_owned$names[i] = "TK"
-  } else if (temp_owner_owned$names[i] == "TMW"){
-    temp_owner_owned$names[i] = "check with VD"
-  } else if (temp_owner_owned$names[i] == "Trisha"){
-    temp_owner_owned$names[i] = "TP"
-  } else if (temp_owner_owned$names[i] == "TU"){
-    temp_owner_owned$names[i] = "check with VD"
-  } else if (temp_owner_owned$names[i] == "Uwe Mamat"){
-    temp_owner_owned$names[i] = "UM"
-  } else if (temp_owner_owned$names[i] == "VD or MD"){
-    temp_owner_owned$names[i] = "VD/MD"
-  } else if (temp_owner_owned$names[i] %in% c("VD, MM", "VD,MM", "VD/MM")){
-    temp_owner_owned$names[i] = "VD/MM"
-  } else if (temp_owner_owned$names[i] == "Vera Katalinic-Jankovic"){
-    temp_owner_owned$names[i] = "check with VD"
-  } else if (temp_owner_owned$names[i] %in% c("Viola", "VS", "VS, high cov")){
-    temp_owner_owned$names[i] = "VD"
-  } else if (temp_owner_owned$names[i] == "Wolfgang Streit"){
-    temp_owner_owned$names[i] = "check with VD"
-  } else if (temp_owner_owned$names[i] == "Yassir"){
-    temp_owner_owned$names[i] = "YS"
-  } else if (temp_owner_owned$names[i] == "Yassir/GK"){
-    temp_owner_owned$names[i] = "YS/GK"
-  } else {
-    temp_owner_owned$names[i] = temp_owner_owned$names[i]
-  }
-}
+# Standardize to scientific names using the map
+data <- temp_org_tab %>%
+  rowwise() %>%
+  mutate(names = ifelse(names %in% names(scientific_name_map),
+                        scientific_name_map[[names]], 
+                        names))
 
-rownames(temp_owner_owned) <- NULL
+rownames(data) <- NULL
 
-# write.table(temp_owner_owned, file = "found_rp.tsv", row.names = FALSE, sep = "\t")
+# Entries without an Organism information
+temp_org_missing <- data[which(is.na(data$names)), ]
 
-# Get the libs with owner information
-temp_owner_missing = temp_owner_tab[temp_owner_tab$names %in% "check study", ]
+rownames(temp_org_missing) <- NULL
 
-rownames(temp_owner_missing) <- NULL
+write.table(temp_org_missing, file = "missing_organism.tsv", row.names = FALSE, sep = "\t")
 
-# write.table(temp_owner_missing, file = "missing_rp.tsv", row.names = FALSE, sep = "\t")
+
+
+# Entries without an Organism information
+temp_org_found <- data[!is.na(data$names), ]
+
+rownames(temp_org_found) <- NULL
+
+write.table(temp_org_found, file = "found_organism.tsv", row.names = FALSE, sep = "\t")
+
+

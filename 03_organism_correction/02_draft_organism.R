@@ -124,6 +124,7 @@ scientific_name_map <- list(
   "M. MARINUM (PRIMÄRKULTUR)" = "Mycobacterium marinum (primary culture)",
   "M. MARSEILLENSE, M. YONGONENSE, M. INTRACELLULARE" = "Mycobacterium -intracellulare, -marseillense, -yonogonense",
   "M. ORYGIS" = "Mycobacterium orygis",
+  "M. ORYGIS?" = "Mycobacterium orygis",
   "M. SPEZIES" = "Mycobacterium spp.",
   "M. SPECIES" = "Mycobacterium spp.",
   "M. TUBERCULOSIS" = "Mycobacterium tuberculosis",
@@ -180,6 +181,13 @@ scientific_name_map <- list(
   "STREPTOCOCCUS PYOGENES" = "Streptococcus pyogenes",
   "TB (PRIMÄRKULTUR)" = "Mycobacterium tuberculosis (Primary culture)",
   "TB (WACHSTUMSKONTROLLE)" = "Mycobacterium tuberculosis (Growth control)",
+  "HUMAN 9,99999NG/ M. TUBERCULOSIS 0,00001NG" = "Homo sapiens/Mycobacterium tuberculosis (9,99999ng/0,00001ng)",
+  "HUMAN 9,9999NG/ M. TUBERCULOSIS 0,0001NG" = "Homo sapiens/Mycobacterium tuberculosis (9,9999ng/0,0001ng)",
+  "HUMAN 9,999NG/ M. TUBERCULOSIS 0,001NG" = "Homo sapiens/Mycobacterium tuberculosis (9,999ng/0,001ng)",
+  "HUMAN 9,99NG/ M. TUBERCULOSIS 0,01NG" = "Homo sapiens/Mycobacterium tuberculosis (9,99ng/0,01ng)",
+  "HUMAN 9,9NG/ M. TUBERCULOSIS 0,1NG" = "Homo sapiens/Mycobacterium tuberculosis (9,9ng/0,1ng)",
+  "HUMAN 9NG/ M. TUBERCULOSIS 1NG" = "Homo sapiens/Mycobacterium tuberculosis (9ng/1ng)",
+  "HUMAN/ M. TUBERCULOSIS" = "Homo sapiens/Mycobacterium tuberculosis",
   "TOTAL BACTERIA GENES" = NA,
   "UNKNOWN (M. HEIDELBERGENSE)" = "Mycobacterium heidelbergense",
   "URAL" = NA,
@@ -194,18 +202,6 @@ data <- temp_org_tab %>%
   mutate(names = ifelse(names %in% names(scientific_name_map),
                         scientific_name_map[[names]], 
                         names))
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # what are those digits doing in the name section

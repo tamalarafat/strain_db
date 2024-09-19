@@ -143,6 +143,100 @@ print(temp_data)
 
 
 
+### 19/09/2024
+#1 Function to add hyphen after the scientific name if text follows
+add_hyphen_if_needed <- function(x) {
+  # Add hyphen after the scientific name if it is followed by any other characters (e.g., text or numbers)
+  x <- gsub("([A-Za-z]+\\s+[a-z]\\s+)([A-Za-z0-9])", "\\1-\\2", x)
+  return(x)
+}
+
+# Extract all unique scientific names from the study_scientific_name_map
+sci_names <- unique(unname(unlist(study_scientific_name_map)))
+
+#2 Function to add hyphen after scientific name if text follows and no underscore is present
+add_hyphen_if_needed <- function(x, sci_names) {
+  for (sci_name in sci_names) {
+    # Check if the string contains the scientific name and extra characters follow
+    if (grepl(paste0(sci_name, "[A-Za-z0-9]"), x) && !grepl("-", x)) {
+      # Add hyphen between scientific name and the following characters
+      x <- gsub(paste0("(", sci_name, ")([A-Za-z0-9])"), "\\1-\\2", x)
+    }
+  }
+  return(x)
+}
+
+
+#3 Function to add hyphen after scientific name if text follows and no underscore is present
+add_hyphen_if_needed <- function(x, sci_names) {
+  for (sci_name in sci_names) {
+    # Escape special characters in the scientific name (e.g., dots or parentheses)
+    sci_name_escaped <- gsub("([\\.\\(\\)\\-])", "\\\\\\1", sci_name)
+    
+    # Check if the string contains the scientific name followed by additional characters
+    if (grepl(paste0(sci_name_escaped, "[A-Za-z0-9]"), x) && !grepl("-", x)) {
+      # Add a hyphen between the scientific name and the following characters
+      x <- gsub(paste0("(", sci_name_escaped, ")([A-Za-z0-9])"), "\\1-\\2", x)
+    }
+  }
+  return(x)
+}
+
+#4 Function to add hyphen after the scientific name if text follows and no underscore is present
+add_hyphen_if_needed <- function(x, sci_names) {
+  for (sci_name in sci_names) {
+    # Create a regex pattern to check for the scientific name followed by more characters, without an underscore
+    pattern <- paste0("(", sci_name, ")([A-Za-z0-9])")
+    
+    # Check if the scientific name is followed by more text and no underscore
+    if (grepl(pattern, x) && !grepl("_", x)) {
+      # Add the hyphen between the scientific name and the following text
+      x <- gsub(pattern, "\\1-\\2", x)
+    }
+  }
+  return(x)
+}
+
+#5 Function to add hyphen after scientific name if text follows
+add_hyphen_after_sci_name <- function(x, sci_names) {
+  for (sci_name in sci_names) {
+    # Check if the string contains the scientific name and extra characters follow (text or spaces)
+    if (grepl(paste0(sci_name, "[\\sA-Za-z0-9]"), x)) {
+      # Add hyphen between scientific name and the following text if not already present
+      x <- gsub(paste0("(", sci_name, ")([A-Za-z0-9])"), "\\1-\\2", x)
+      # Handle cases where there's already a space or no separator, ensuring hyphen is added
+      x <- gsub(paste0("(", sci_name, ")\\s+"), "\\1-", x)
+    }
+  }
+  return(x)
+}
+
+#6 Function to add hyphen after scientific name if text follows
+add_hyphen_after_sci_name <- function(x, sci_names) {
+  for (sci_name in sci_names) {
+    # Check if the string contains the scientific name and extra characters follow
+    if (grepl(paste0(sci_name, "(\\s|\\S)"), x) && !grepl(paste0(sci_name, "-"), x)) {
+      # Add hyphen between scientific name and the following text, if not already present
+      x <- gsub(paste0("(", sci_name, ")\\s*(\\S)"), "\\1-\\2", x)
+    }
+  }
+  return(x)
+}
+
+tt = "Mycobacterium abscessus BORSTEL"
+grepl(paste0(sci_name, "(\\s|\\S)"), x)
+grepl(paste0("Mycobacterium abscessus", "(\\s|\\S)"), tt)
+
+grepl(paste0("Mycobacterium abscessus", "[\\sA-Za-z0-9]"), tt)
+
+# Apply this function to the 'corrected_names' column after running the initial reformatting
+temp_study_fix$temp1 <- sapply(temp_study_fix$corrected_names, add_hyphen_after_sci_name, sci_names)
+
+# Print the final results
+print(temp_data)
+
+
+
 # commensal bacteria - KOMMENSALE BAKTERIEN, 
 # Changed 16/09/2024
 # List of scientific names for validation

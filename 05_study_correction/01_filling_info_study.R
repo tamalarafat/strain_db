@@ -86,6 +86,10 @@ names_in_group <- unique_entries[groupings == 1]
 # From the grouping we can get similar entries
 study_table = as.data.frame(sort(table(groupings), decreasing = TRUE), stringsAsFactors = FALSE)
 
+for (i in c(1:nrow(study_table))){
+  print(i)
+  print(unique_entries[groupings == study_table$groupings[i]])
+}
 unique_entries[groupings == study_table$groupings[4]]
 
 

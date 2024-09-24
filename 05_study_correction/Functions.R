@@ -29,3 +29,42 @@ add_hyphen_after_sci_name <- function(x, sci_names) {
   }
   return(x)
 }
+
+# New and fully functioning: Function to replace country/city names
+replace_with_map <- function(study, country_map) {
+  
+  # Iterate over the rows of the column
+  for (i in seq_along(study)) {
+    
+    # Iterate through the country_map key-value pairs
+    for (j in seq_along(country_map)) {
+      
+      pattern <- names(country_map)[j]
+      replacement <- country_map[[j]]
+      
+      # Replace the matched names
+      if (grepl(pattern, study[i], ignore.case = TRUE)) {
+        study[i] <- gsub(pattern, replacement, study[i], ignore.case = TRUE)
+        
+        # Add space if digits follow the country/city name
+        study[i] <- gsub(paste0("(", replacement, ")([0-9])"), "\\1 \\2", study[i])
+      }
+    }
+  }
+  return(study)
+}
+
+# 1st and functioning without the space addign part: Function to replace country/city names
+replace_country_city <- function(text, country_map) {
+  # Iterate over all country and city names
+  for (pattern in names(country_map)) {
+    # Replace the pattern with its mapped value
+    text <- gsub(pattern, country_map[[pattern]], text, ignore.case = TRUE)
+    
+    # Ensure proper spacing around the replaced country/city name
+    text <- gsub(paste0(" ", country_map[[pattern]], " "), paste0(" ", country_map[[pattern]], " "), text)
+  }
+  
+  # Return the cleaned text
+  return(text)
+}

@@ -66,7 +66,13 @@ temp_study_fix$corrected_names <- sapply(temp_study_fix$correction, replace_and_
 sci_names <- unique(unname(unlist(study_scientific_name_map)))
 
 # Apply this function to the 'corrected_names' column after running the initial reformatting
-temp_study_fix$temp1 <- sapply(temp_study_fix$corrected_names, add_hyphen_after_sci_name, sci_names)
+temp_study_fix$temp_sci <- sapply(temp_study_fix$corrected_names, add_hyphen_after_sci_name, sci_names)
+
+# Apply the replacement function to the column
+temp_study_fix$temp_country <- replace_with_map(temp_study_fix$temp_sci, country_map)
+
+
+
 
 # Get unique entries
 unique_entries <- unique(temp_study_fix$temp1)

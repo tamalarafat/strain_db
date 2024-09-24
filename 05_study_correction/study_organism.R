@@ -43,6 +43,7 @@ study_scientific_name_map <- list(
   "RICKETTSIA TYPHI" = "Rickettsia typhi", 
   "S. AUREUS" = "Staphylococcus aureus", 
   "S. EPIDERMIDIS" = "Staphylococcus epidermidis", 
+  "STAPHYLOCOCCUS EPIDERMIDIS" = "Staphylococcus epidermidis", 
   "S. ACIDAMINIPHILIA" = "Stenotrophomonas acidaminiphila", 
   "S. HUMI" = "S. humi", 
   "S. KOREENSIS" = "Sphingomonas koreensis", 
@@ -59,5 +60,6 @@ study_scientific_name_map <- list(
   "CHIMAERA" = "Mycobacterium chimaera",
   "MICROTI" = "Mycobacterium microti",
   "STENO" = "Stenotrophomonas spp.",
-  "M. CANETTI" = "Mycobacterium canettii"
+  "M. CANETTI" = "Mycobacterium canettii",
+  "ACINETOBACTER LWOFFII" = "Acinetobacter lwoffii"
 )

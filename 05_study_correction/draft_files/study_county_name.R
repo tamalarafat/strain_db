@@ -26,6 +26,7 @@ cleaned_names <- c(
   "FRANKREICH" = "France",
   "GEORGIEN" = "Georgia",
   "GHANA" = "Ghana",
+  "EASTGREENLAND" = "East Greenland",
   "GREENLAND" = "Greenland",
   "HAMBURG" = "Hamburg",
   "HANNOVER" = "Hanover",

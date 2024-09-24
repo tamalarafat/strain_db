@@ -287,6 +287,18 @@ temp_dot = temp_study_fix[temp_study_5, ]
 
 str_c(temp_dot$names, collapse = ", ")
 
+# get all the entries with a .
+temp_study_5 = which(grepl(pattern = "BW", x = temp_study_fix$names))
+
+temp_dot = temp_study_fix[temp_study_5, ]
+
+str_c(temp_dot$names, collapse = ", ")
+
+# Check all details
+temp_study_4 = which(grepl(pattern = "^BW$", x = all_libs$study))
+
+dd = all_libs[temp_study_4, ]
+
 
 
 

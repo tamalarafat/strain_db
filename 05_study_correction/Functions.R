@@ -44,10 +44,53 @@ replace_with_map <- function(study, country_map) {
       
       # Replace the matched names
       if (grepl(pattern, study[i], ignore.case = TRUE)) {
-        study[i] <- gsub(pattern, replacement, study[i], ignore.case = TRUE)
+        study[i] <- gsub(pattern, replacement, study[i], fixed = TRUE, ignore.case = TRUE)
         
         # Add space if digits follow the country/city name
         study[i] <- gsub(paste0("(", replacement, ")([0-9])"), "\\1 \\2", study[i])
+      }
+    }
+  }
+  return(study)
+}
+
+# To replace entry names
+# Function to replace entry names
+replace_entry_with_map <- function(study, entry_map) {
+  
+  # Iterate over the rows of the column
+  for (i in seq_along(study)) {
+    
+    # Iterate through the country_map key-value pairs
+    for (j in seq_along(entry_map)) {
+      
+      pattern <- names(entry_map)[j]
+      replacement <- entry_map[[j]]
+      
+      # Replace the matched names
+      if (grepl(pattern, study[i], ignore.case = TRUE)) {
+        study[i] <- gsub(pattern, replacement, study[i], ignore.case = TRUE, fixed = TRUE)
+        
+        # Extract text after the entry name
+        study[i] <- gsub("(Order NRZ|Order Clinic)(.*?)$", "\\2-\\1", study[i], perl = TRUE)
+        
+        # Extract text before the entry name
+        study[i] <- gsub("^(.*?)(Childhood TB)", "\\1-\\2", study[i], perl = TRUE)
+        
+        # Extract text after the entry name
+        study[i] <- gsub("^(.*?)(RaPaed)", "\\2-\\1", study[i], perl = TRUE)
+        
+        # Extract text before the entry name
+        study[i] <- gsub("^(TB-Sequel)(-)(.*?)", "\\1 \\3", study[i], perl = TRUE)
+        
+        study[i] <- gsub("\\s-", "-", study[i])          # Remove space at the beginning
+        study[i] <- gsub("^\\s", "", study[i])          # Remove space at the beginning
+        study[i] <- gsub("-$", "", study[i])          # Remove trailing hyphen if no text follows
+        study[i] <- gsub("^-", "", study[i])          # Remove leading hyphen if no text precedes
+        study[i] <- gsub("--", "-", study[i])         # Replace any double hyphens with a single hyphen
+        
+        # Add space if digits follow the country/city name
+        # study[i] <- gsub(paste0("(", replacement, ")([0-9])"), "\\1 \\2", study[i])
       }
     }
   }
@@ -59,7 +102,7 @@ replace_country_city <- function(text, country_map) {
   # Iterate over all country and city names
   for (pattern in names(country_map)) {
     # Replace the pattern with its mapped value
-    text <- gsub(pattern, country_map[[pattern]], text, ignore.case = TRUE)
+    text <- gsub(pattern, country_map[[pattern]], text, fixed = TRUE, ignore.case = TRUE)
     
     # Ensure proper spacing around the replaced country/city name
     text <- gsub(paste0(" ", country_map[[pattern]], " "), paste0(" ", country_map[[pattern]], " "), text)

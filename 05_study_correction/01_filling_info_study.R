@@ -10,9 +10,22 @@ library(dplyr)
 # load the file containing missing libraries
 all_libs = loadRData("~/Documents/Projects/git_projects/strain_db/output_files/01_date_corrected/all_libs.RData")
 
-
 # Transform all the NA to "-"
 all_libs$study[which(is.na(all_libs$study))] <- "-"
+
+# Change entries on the Study column before starting cleaning
+
+# Deal with the actual library file - "QC-2019"
+temp_qc_2019_index = which(grepl(pattern = "QC-2019", x = all_libs$borstel_ID))
+
+# Assign to actual data
+all_libs$study[temp_qc_2019_index] = "Quality Control panel 2019"
+
+# Deal with the actual library file - "QC-2019"
+temp_qc_2020_index = which(grepl(pattern = "QC-2020", x = all_libs$borstel_ID))
+
+# Assign to actual data
+all_libs$study[temp_qc_2020_index] = "Quality Control panel 2020"
 
 # How are the dates added to the table
 temp_study_tab = data.frame(table(all_libs$study), stringsAsFactors = FALSE)
@@ -35,7 +48,7 @@ temp_digit_check_index = which(grepl(pattern = str_c("^\\d{1,4}$", "^-$", sep = 
 # Data containing only missing values
 temp_study_missing = temp_study_tab[temp_digit_check_index, ]
 
-# Data containing only missing values
+# Data containing entry in study column
 temp_study_fix = temp_study_tab[-temp_digit_check_index, ]
 
 # Remove all the double space
@@ -45,7 +58,7 @@ temp_study_fix$names <- str_replace_all(temp_study_fix$names, "\\s{2,}", " ")
 temp_study_fix$names <- str_replace_all(temp_study_fix$names, "(\\w)\\.(\\w)", "\\1. \\2")
 
 # Replace special characters with '-'
-temp_study_fix$names <- str_replace_all(temp_study_fix$names, "[_,/]", "-")
+temp_study_fix$names <- str_replace_all(temp_study_fix$names, "[_,/:]", "-")
 
 # Add missing space after a period
 temp_study_fix$names <- str_replace_all(temp_study_fix$names, "\\s*-\\s*", "-")
@@ -71,11 +84,16 @@ temp_study_fix$temp_sci <- sapply(temp_study_fix$corrected_names, add_hyphen_aft
 # Apply the replacement function to the column
 temp_study_fix$temp_country <- replace_with_map(temp_study_fix$temp_sci, country_map)
 
+# Deal with the study column
+temp_swabs_botswana = which(grepl(pattern = "SWABS-Botswana", x = temp_study_fix$temp_country))
 
+temp_study_fix$temp_country[temp_swabs_botswana] <- "SWABS-Botswana 2023"
 
+# Apply replacing function to the 'corrected_names' column after running the initial reformatting
+temp_study_fix$temp_entry <- replace_entry_with_map(temp_study_fix$temp_country, entry_name_map)
 
 # Get unique entries
-unique_entries <- unique(temp_study_fix$temp1)
+unique_entries <- unique(temp_study_fix$temp_entry)
 
 # Create a distance matrix based on string similarity
 dist_matrix <- stringdistmatrix(unique_entries, unique_entries, method = "jw")

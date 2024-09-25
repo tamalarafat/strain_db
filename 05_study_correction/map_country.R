@@ -117,5 +117,6 @@ country_map <- c(
   "STUTTGART" = "Stuttgart",
   "TURK" = "Turkey",
   "UZBEKISTAN" = "Uzbekistan",
-  "WIEN" = "Vienna"
+  "WIEN" = "Vienna",
+  "QATAR" = "Qatar"
 )

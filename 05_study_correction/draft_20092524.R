@@ -46,7 +46,7 @@ temp_study_fix$temp_entry <- replace_entry_with_map(temp_study_fix$temp_country,
 gsub("^(TB-Sequel)(-)(.*?)", "\\1 \\3", "TB-Sequel-South Africa", perl = TRUE)
 
 # Define the output file path
-output_file <- "output_25_09_2024.txt"
+output_file <- "output_26_09_2024.txt"
 
 # Open a connection to the file
 file_conn <- file(output_file, "w")
@@ -67,3 +67,17 @@ close(file_conn)
 
 # Confirmation message
 cat("Output written to", output_file)
+
+# 26/09/2024
+
+# Complete library
+
+# Deal with the actual library file - "TP"
+temp_tp_index = which(grepl(pattern = "TP\\d{1}", x = all_libs$study))
+
+# Assign to actual data
+aa = all_libs[temp_tp_index, ]
+
+
+
+

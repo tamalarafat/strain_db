@@ -4,7 +4,6 @@ country_map <- c(
   "BOTSWANA" = "Botswana",
   "ITALIEN" = "Italy",
   "DRESDEN" = "Dresden",
-  "HCU (UNI GIEßEN)" = "HCU (Uni Gießen)",
   "BORSTEL" = "Borstel",
   "BERLIN" = "Berlin",
   "BASEL" = "Basel",

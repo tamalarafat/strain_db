@@ -1,5 +1,13 @@
+# Functions
+mapset <- list.files("~/Documents/Projects/git_projects/strain_db/05_study_correction/01_entry_mapping/", pattern = "*.R$", full.names = TRUE)
+sapply(mapset, source, .GlobalEnv)
+
+funcset <- list.files("~/Documents/Projects/git_projects/strain_db/05_study_correction/02_study_functions/", pattern = "*.R$", full.names = TRUE)
+sapply(funcset, source, .GlobalEnv)
+
 # load the libs
 source("~/Documents/Projects/git_projects/strain_db/functions/loadRdata.R")
+
 
 library(stringdist)
 library(readxl)

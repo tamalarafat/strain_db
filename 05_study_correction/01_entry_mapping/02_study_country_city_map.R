@@ -62,7 +62,7 @@ country_map <- c(
   "THAILAND" = "Thailand",
   "ANTWERPEN" = "Antwerp",
   "ANTWEERPEN" = "Antwerp",
-  "Sambia" = "Zambia",
+  "SAMBIA" = "Zambia",
   "ARGENTINA" = "Argentina",
   "ARMENIEN" = "Armenia",
   "ASERBAIDSCHAN" = "Azerbaijan",

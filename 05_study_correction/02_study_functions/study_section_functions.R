@@ -69,7 +69,7 @@ replace_entry_with_map <- function(study, entry_map) {
       
       # Replace the matched names
       if (grepl(pattern, study[i], ignore.case = TRUE)) {
-        study[i] <- gsub(pattern, replacement, study[i], ignore.case = TRUE, fixed = TRUE)
+        study[i] <- gsub(pattern, replacement, study[i], fixed = TRUE)
         
         # Extract text after the entry name
         study[i] <- gsub("(Order NRZ|Order Clinic)(.*?)$", "\\2-\\1", study[i], perl = TRUE)
@@ -97,15 +97,26 @@ replace_entry_with_map <- function(study, entry_map) {
   return(study)
 }
 
-# 1st and functioning without the space addign part: Function to replace country/city names
-replace_country_city <- function(text, country_map) {
+# Exact match
+replace_exact_names <- function(text, side_name_map) {
   # Iterate over all country and city names
-  for (pattern in names(country_map)) {
-    # Replace the pattern with its mapped value
-    text <- gsub(pattern, country_map[[pattern]], text, fixed = TRUE, ignore.case = TRUE)
+  for (pattern in names(side_name_map)) {
+    # Replace the pattern with its mapped value using regex
+    text <- gsub(pattern, side_name_map[[pattern]], text, ignore.case = TRUE)
+  }
+  
+  # Return the cleaned text
+  return(text)
+}
+
+replace_exact_names <- function(text, side_name_map) {
+  # Iterate over all country and city names
+  for (pattern in names(side_name_map)) {
+    # Escape parentheses in the pattern if using fixed = TRUE
+    pattern_escaped <- gsub("([()])", "\\\\\\1", pattern)
     
-    # Ensure proper spacing around the replaced country/city name
-    text <- gsub(paste0(" ", country_map[[pattern]], " "), paste0(" ", country_map[[pattern]], " "), text)
+    # Replace the pattern with its mapped value
+    text <- gsub(pattern_escaped, side_name_map[[pattern]], text, ignore.case = TRUE)
   }
   
   # Return the cleaned text
